@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+__MACOSX/
+
+# LaTeX source files (edit locally, compiled PDFs tracked)
+report/*.tex
+report/*.bib
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# Trained models (large binary files)
+outputs/models/*.joblib
+
+# Repeated splits intermediate outputs (regenerable)
+outputs/repeated/
+
+# Submission archives
+*.zip
+
+# Pytest
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Claude
+.claude/
+
+# Stale directories (old backups, extracted submissions, tools)
+.backup_before_changes/
+submission/
+touched_files/
+tools/
+
+# Loose files at project root (not part of source)
+/*.pdf
+/*.xlsx
+/*.png
