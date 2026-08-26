@@ -1,14 +1,14 @@
 # Probabilistic Building Energy Prediction
 
-**Gaussian Process Regression, uncertainty diagnostics and reproducible evaluation across 768 simulated building configurations.**
+**A model that gets the answer right but has no idea when it is wrong is only half useful.**
 
 [![tests](https://github.com/jacobemanuel/building-energy-gpr/actions/workflows/tests.yml/badge.svg)](https://github.com/jacobemanuel/building-energy-gpr/actions/workflows/tests.yml)
 
-Can a probabilistic surrogate provide accurate load estimates while also indicating when its predictions should not be trusted?
+Can a probabilistic model predict building loads accurately and tell me when that prediction deserves less trust?
 
-I built a leakage-safe evaluation pipeline for heating and cooling load using the [UCI Energy Efficiency benchmark](https://doi.org/10.24432/C51307). The study compares ridge regression, a 300-tree random forest and exact Gaussian Process Regression under the same held-out splits. Point accuracy is only half of the analysis: native Gaussian predictive intervals are checked empirically, then contrasted with a separate split-conformal coverage check.
+I did not want another notebook that ended with one R² score and a victory lap. I built a leakage-safe evaluation pipeline for heating and cooling load using the [UCI Energy Efficiency benchmark](https://doi.org/10.24432/C51307). Ridge regression, a 300-tree random forest and exact Gaussian Process Regression face the same held-out splits. Point accuracy is only half of the analysis: native Gaussian predictive intervals are checked empirically, then contrasted with a separate split-conformal coverage check.
 
-> Independent M.Sc. research project, Technical University of Munich, Management and Technology.
+> Course project for *Python for Engineering Data Analysis - From Machine Learning to Visualization*, Technical University of Munich.
 
 ## At a glance
 
@@ -21,7 +21,7 @@ I built a leakage-safe evaluation pipeline for heating and cooling load using th
 - **Reproducibility:** persisted split indices, configuration, predictions, metrics and generated figures
 - **Verification:** 11 automated tests covering data, metrics, pipeline behavior and artifacts
 
-## Experimental design
+## The setup
 
 The dataset is a structured Ecotect simulation grid rather than an observational sample of real buildings. Inputs describe relative compactness, surface and wall area, roof area, overall height, orientation, glazing area and glazing-area distribution.
 
@@ -33,16 +33,16 @@ The same outer split is shared across models and targets. This makes the point-e
 
 *Heating and cooling loads form a strongly structured design grid; color marks glazing-area distribution.*
 
-## Models
+## What had to compete
 
 - **RidgeCV** provides a regularized linear baseline.
 - **Random Forest** provides a strong nonlinear point-prediction baseline.
-- **One-hot GPR** is the principled probabilistic model reported in the main analysis.
+- **One-hot GPR** is the primary probabilistic model used in the main analysis.
 - **Numeric-encoding GPR** is retained as an ablation. It improves some point metrics but imposes an unjustified ordinal geometry on nominal categories, so it is not treated as the primary model.
 
 The Gaussian process uses a constant multiplied by a Matern-3/2 kernel, plus a `WhiteKernel` residual component. On deterministic simulation data, that component should be read as model lack of fit or numerical tolerance, not as an empirical decomposition of real-world aleatoric uncertainty.
 
-## Held-out results
+## One model did not win everything
 
 Fixed 80/20 holdout, seed 42:
 
@@ -53,13 +53,13 @@ Fixed 80/20 holdout, seed 42:
 | Cooling load (`Y2`) | Random Forest | 1.270 | 2.035 | 0.9553 | n/a | n/a |
 | Cooling load (`Y2`) | GPR | **1.038** | **1.497** | **0.9758** | 91.6% | 92.9% |
 
-The ranking is target-dependent. Random Forest produced the lowest heating-load point error. GPR performed better on cooling load and additionally supplied model-based uncertainty estimates. I kept that trade-off visible instead of presenting one model as a universal winner.
+Random Forest won heating-load point accuracy. GPR performed better on cooling load and brought model-based uncertainty with it. That is more useful than forcing one model into the role of universal champion, so I kept the trade-off visible.
 
 ![Gaussian-process predictions against held-out values](outputs/figures/gpr_pred_vs_true.png)
 
-*Held-out predictions from the principled one-hot GPR. The orange line is the identity reference, not a fitted trend.*
+*Held-out predictions from the primary one-hot GPR. The orange line is the identity reference, not a fitted trend.*
 
-## Stability across repeated holdouts
+## One split was not enough
 
 The primary result was checked across 10 repeated random 80/20 holdouts. Values are mean plus or minus standard deviation for the one-hot GPR.
 
@@ -70,7 +70,7 @@ The primary result was checked across 10 repeated random 80/20 holdouts. Values 
 
 These are repeated holdouts, not k-fold cross-validation. The distinction is recorded because the evaluation design determines what the variation means.
 
-## Uncertainty, checked rather than assumed
+## Uncertainty has to earn trust
 
 Predictive standard deviations from GPR were evaluated through empirical coverage, reliability curves and standardized residuals. Native intervals were conservative for heating load. For cooling load, 90% coverage was close to nominal while 95% coverage reached 92.9%, indicating mild undercoverage at that level.
 
@@ -133,24 +133,18 @@ report/              public technical report and supplementary appendix
 - [Technical report](report/report.pdf)
 - [Supplementary appendix](report/appendix.pdf)
 
-The public PDFs preserve the academic content while omitting private university identifiers. This README provides a compact, reproducible index to the reported result set.
+The public PDFs preserve the academic content while omitting private university identifiers. The README links every headline result to a reproducible output.
 
 ## Scope and limitations
 
-Random holdouts primarily test interpolation within the controlled simulation grid, not generalization to unseen real buildings. The benchmark is useful for comparing pipelines and uncertainty behavior, but it does not reproduce sensor noise, occupancy shifts, weather uncertainty or changes in building stock.
+This is a clean simulation grid, not a messy building. Random holdouts primarily test interpolation within that grid, not generalization to unseen real buildings. The benchmark is useful for comparing pipelines and uncertainty behavior, but it does not reproduce sensor noise, occupancy shifts, weather uncertainty or changes in building stock.
 
 Exact GPR is practical here because `n = 768`; its cubic training cost will not scale unchanged to very large datasets. The model comparison is deliberately compact and reproducible rather than a state-of-the-art hyperparameter competition.
 
-## Why it belongs in my research portfolio
+## What I took from the project
 
-The domain differs from my current XR work, but the research pattern is the same: define a measurable question, build a traceable apparatus, prevent leakage, compare honest baselines, inspect uncertainty and document enough for another person to reproduce the result.
+The domain is different from my current XR work, but the habit transferred directly: define a measurable question, prevent leakage, compare honest baselines, inspect uncertainty and leave enough evidence for someone else to reproduce the result. Different domain, same instinct: find the point where a good-looking result stops being trustworthy.
 
 ## Data attribution
 
 Tsanas, A. and Xifara, A. (2012). *Energy Efficiency* [Dataset]. UCI Machine Learning Repository. [DOI: 10.24432/C51307](https://doi.org/10.24432/C51307). Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-
-## Author
-
-**Jakub Majewski**
-
-[github.com/jacobemanuel](https://github.com/jacobemanuel)
