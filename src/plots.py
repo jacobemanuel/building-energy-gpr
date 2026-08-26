@@ -46,7 +46,7 @@ def plot_pred_vs_true(y_true_dict: dict, y_pred_dict: dict, path: Path) -> None:
         fig, ax = plt.subplots(1, 1, figsize=(4.8, 4.6))
         axes = [ax]
     else:
-        fig, axes = plt.subplots(len(targets), 1, figsize=(4.8, 8.4))
+        fig, axes = plt.subplots(1, len(targets), figsize=(5.2 * len(targets), 4.6))
         axes = list(np.atleast_1d(axes))
     min_val = None
     max_val = None
