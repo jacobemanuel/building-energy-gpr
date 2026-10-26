@@ -1,12 +1,12 @@
 # Probabilistic Building Energy Prediction
 
-**A model that gets the answer right but has no idea when it is wrong is only half useful.**
+**A model that gets the answer right but has no idea when it's wrong is only half useful.**
 
 [![tests](https://github.com/jacobemanuel/building-energy-gpr/actions/workflows/tests.yml/badge.svg)](https://github.com/jacobemanuel/building-energy-gpr/actions/workflows/tests.yml)
 
-Can a probabilistic model predict building loads accurately and tell me when that prediction deserves less trust?
+Can a probabilistic model predict building loads accurately and also tell me when to trust its prediction less?
 
-I did not want another notebook that ended with one R² score and a victory lap. I built a leakage-safe evaluation pipeline for heating and cooling load using the [UCI Energy Efficiency benchmark](https://doi.org/10.24432/C51307). Ridge regression, a 300-tree random forest and exact Gaussian Process Regression face the same held-out splits. Point accuracy is only half of the analysis: native Gaussian predictive intervals are checked empirically, then contrasted with a separate split-conformal coverage check.
+I didn't want another notebook that ends with one R² score and a victory lap. So I built a leakage-safe evaluation pipeline for heating and cooling load on the [UCI Energy Efficiency benchmark](https://doi.org/10.24432/C51307). Ridge regression, a 300-tree random forest and exact Gaussian Process Regression all get tested on the same held-out splits. Point accuracy is only half the analysis. I also check the native Gaussian predictive intervals empirically and then compare them with a separate split-conformal coverage check.
 
 > Course project for *Python for Engineering Data Analysis - From Machine Learning to Visualization*, Technical University of Munich.
 
@@ -18,33 +18,33 @@ I did not want another notebook that ended with one R² score and a victory lap.
 - **Primary split:** fixed 80/20 holdout with seed 42
 - **Stability check:** 10 repeated random 80/20 holdouts with seeds 1 to 10
 - **Uncertainty:** empirical diagnostics for native Gaussian intervals plus a separate split-conformal check
-- **Reproducibility:** persisted split indices, configuration, predictions, metrics and generated figures
+- **Reproducibility:** saved split indices, configuration, predictions, metrics and generated figures
 - **Verification:** 11 automated tests covering data, metrics, pipeline behavior and artifacts
 
 ## The setup
 
-The dataset is a structured Ecotect simulation grid rather than an observational sample of real buildings. Inputs describe relative compactness, surface and wall area, roof area, overall height, orientation, glazing area and glazing-area distribution.
+The dataset is a structured Ecotect simulation grid rather than an observational sample of real buildings. The inputs cover relative compactness, surface and wall area, roof area, overall height, orientation, glazing area and glazing-area distribution.
 
-Orientation and glazing distribution are nominal variables. The main pipeline therefore one-hot encodes them instead of treating their numeric labels as meaningful distances. Continuous variables are standardized. Every preprocessing step remains inside a scikit-learn `Pipeline` and is fitted on the training partition only.
+Orientation and glazing distribution are nominal variables. That's why the main pipeline one-hot encodes them instead of treating their numeric labels as if the distances between them meant something. Continuous variables get standardized. Every preprocessing step lives inside a scikit-learn `Pipeline` and only gets fitted on the training partition.
 
-The same outer split is shared across models and targets. This makes the point-error comparison direct and prevents preprocessing leakage. Split indices, model configuration, held-out predictions and evaluation metrics are saved so every public number can be traced back to a generated artifact.
+All models and targets share the same outer split. That way the point-error comparison stays direct and there's no preprocessing leakage. I save the split indices, model configuration, held-out predictions and evaluation metrics so every public number can be traced back to a generated artifact.
 
 ![Heating and cooling load across the structured design grid](outputs/figures/target_joint_by_x8.png)
 
-*Heating and cooling loads form a strongly structured design grid; color marks glazing-area distribution.*
+*Heating and cooling loads form a strongly structured design grid. Color shows the glazing-area distribution.*
 
 ## What had to compete
 
-- **RidgeCV** provides a regularized linear baseline.
-- **Random Forest** provides a strong nonlinear point-prediction baseline.
-- **One-hot GPR** is the primary probabilistic model used in the main analysis.
-- **Numeric-encoding GPR** is retained as an ablation. It improves some point metrics but imposes an unjustified ordinal geometry on nominal categories, so it is not treated as the primary model.
+- **RidgeCV** gives me a regularized linear baseline.
+- **Random Forest** is there as a strong nonlinear point-prediction baseline.
+- **One-hot GPR** is the primary probabilistic model and the one I use in the main analysis.
+- **Numeric-encoding GPR** stays in as an ablation. It does improve some point metrics. But it imposes an unjustified ordinal geometry on nominal categories, so I don't treat it as the primary model.
 
-The Gaussian process uses a constant multiplied by a Matern-3/2 kernel, plus a `WhiteKernel` residual component. On deterministic simulation data, that component should be read as model lack of fit or numerical tolerance, not as an empirical decomposition of real-world aleatoric uncertainty.
+The Gaussian process uses a constant times a Matern-3/2 kernel, plus a `WhiteKernel` residual component. On deterministic simulation data that component should be read as model lack of fit or numerical tolerance. Don't take it as an empirical decomposition of real-world aleatoric uncertainty.
 
 ## One model did not win everything
 
-Fixed 80/20 holdout, seed 42:
+Fixed 80/20 holdout with seed 42:
 
 | Target | Model | MAE | RMSE | R2 | Native 90% coverage | Native 95% coverage |
 |---|---|---:|---:|---:|---:|---:|
@@ -53,41 +53,41 @@ Fixed 80/20 holdout, seed 42:
 | Cooling load (`Y2`) | Random Forest | 1.270 | 2.035 | 0.9553 | n/a | n/a |
 | Cooling load (`Y2`) | GPR | **1.038** | **1.497** | **0.9758** | 91.6% | 92.9% |
 
-Random Forest won heating-load point accuracy. GPR performed better on cooling load and brought model-based uncertainty with it. That is more useful than forcing one model into the role of universal champion, so I kept the trade-off visible.
+Random Forest won on heating-load point accuracy. GPR did better on cooling load and brought model-based uncertainty along with it. That's more useful than forcing one model into the role of universal champion. So I kept the trade-off visible.
 
 ![Gaussian-process predictions against held-out values](outputs/figures/gpr_pred_vs_true.png)
 
-*Held-out predictions from the primary one-hot GPR. The orange line is the identity reference, not a fitted trend.*
+*Held-out predictions from the primary one-hot GPR. The orange line is just the identity reference and wasn't fitted to the data.*
 
 ## One split was not enough
 
-The primary result was checked across 10 repeated random 80/20 holdouts. Values are mean plus or minus standard deviation for the one-hot GPR.
+I checked the primary result across 10 repeated random 80/20 holdouts. The numbers below are mean plus or minus standard deviation for the one-hot GPR.
 
 | Target | MAE | RMSE | R2 |
 |---|---:|---:|---:|
 | Heating load (`Y1`) | 0.536 +/- 0.044 | 0.719 +/- 0.063 | 0.995 +/- 0.001 |
 | Cooling load (`Y2`) | 1.084 +/- 0.114 | 1.502 +/- 0.233 | 0.974 +/- 0.008 |
 
-These are repeated holdouts, not k-fold cross-validation. The distinction is recorded because the evaluation design determines what the variation means.
+These are repeated holdouts, not k-fold cross-validation. I mention it because the evaluation design decides what the variation means.
 
 ## Uncertainty has to earn trust
 
-Predictive standard deviations from GPR were evaluated through empirical coverage, reliability curves and standardized residuals. Native intervals were conservative for heating load. For cooling load, 90% coverage was close to nominal while 95% coverage reached 92.9%, indicating mild undercoverage at that level.
+I evaluated the predictive standard deviations from GPR using empirical coverage, reliability curves and standardized residuals. For heating load the native intervals were conservative. For cooling load the 90% coverage was close to nominal. The 95% coverage came in at 92.9%, so there's mild undercoverage at that level.
 
 ![Empirical reliability of native Gaussian predictive intervals](outputs/figures/gpr_reliability.png)
 
-*Empirical coverage of native Gaussian intervals. Points above the diagonal indicate conservative intervals; points below it indicate undercoverage.*
+*Empirical coverage of native Gaussian intervals. Points above the diagonal mean conservative intervals and points below it mean undercoverage.*
 
 ![Standardized residual diagnostics](outputs/figures/gpr_std_residuals.png)
 
-A separate split-conformal sensitivity check used an absolute-residual calibration set drawn from the outer training partition. On the untouched test set it produced:
+I also ran a separate split-conformal sensitivity check. It used an absolute-residual calibration set taken from the outer training partition. On the untouched test set it gave:
 
 | Target | 90% nominal | 95% nominal |
 |---|---:|---:|
 | Heating load | 94.8% empirical coverage | 97.4% empirical coverage |
 | Cooling load | 89.6% empirical coverage | 95.5% empirical coverage |
 
-These are finite-sample marginal coverage checks under the conformal exchangeability assumption. They are not a claim of conditional calibration, causal validity or readiness for deployment on real buildings.
+These are finite-sample marginal coverage checks under the conformal exchangeability assumption. They don't claim conditional calibration or causal validity. And they don't claim readiness for deployment on real buildings either.
 
 <details>
 <summary>Additional view: feature and target distributions</summary>
@@ -98,7 +98,7 @@ These are finite-sample marginal coverage checks under the conformal exchangeabi
 
 ## Reproduce the analysis
 
-The reported pipeline runs on CPU and was validated from a clean checkout.
+The reported pipeline runs on CPU. I tested it from a clean checkout.
 
 ```bash
 python3 -m venv .venv
@@ -114,7 +114,7 @@ python3 scripts/repeated_splits.py --repeats 10 --start-seed 1
 python3 -m pytest tests/ -q
 ```
 
-The optional GPyTorch backend is experimental and excluded from the reported scikit-learn results.
+There's also an optional GPyTorch backend. It's experimental and isn't part of the reported scikit-learn results.
 
 ## Repository map
 
@@ -133,17 +133,17 @@ report/              public technical report and supplementary appendix
 - [Technical report](report/report.pdf)
 - [Supplementary appendix](report/appendix.pdf)
 
-The public PDFs preserve the academic content while omitting private university identifiers. The README links every headline result to a reproducible output.
+The public PDFs keep the academic content but leave out private university identifiers. This README links every headline result to a reproducible output.
 
 ## Scope and limitations
 
-This is a clean simulation grid, not a messy building. Random holdouts primarily test interpolation within that grid, not generalization to unseen real buildings. The benchmark is useful for comparing pipelines and uncertainty behavior, but it does not reproduce sensor noise, occupancy shifts, weather uncertainty or changes in building stock.
+This is a clean simulation grid. A real building is a lot messier. Random holdouts mainly test interpolation inside that grid, not generalization to unseen real buildings. The benchmark is useful for comparing pipelines and uncertainty behavior. But it doesn't reproduce sensor noise, occupancy shifts, weather uncertainty or changes in building stock.
 
-Exact GPR is practical here because `n = 768`; its cubic training cost will not scale unchanged to very large datasets. The model comparison is deliberately compact and reproducible rather than a state-of-the-art hyperparameter competition.
+Exact GPR is practical here because `n = 768`. Its cubic training cost means it won't scale to very large datasets as is. The model comparison is compact and reproducible on purpose. I didn't try to turn it into a state-of-the-art hyperparameter competition.
 
 ## What I took from the project
 
-The domain is different from my current XR work, but the habit transferred directly: define a measurable question, prevent leakage, compare honest baselines, inspect uncertainty and leave enough evidence for someone else to reproduce the result. Different domain, same instinct: find the point where a good-looking result stops being trustworthy.
+The domain is different from my current XR work, but the habit carried over directly: define a measurable question, prevent leakage, compare honest baselines and inspect the uncertainty. Then leave enough evidence for someone else to reproduce the result. It's the same instinct either way. I'm looking for the point where a good-looking result stops being trustworthy.
 
 ## Data attribution
 
