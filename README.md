@@ -1,12 +1,12 @@
 # Probabilistic Building Energy Prediction
 
-**A model that gets the answer right but has no idea when it's wrong is only half useful.**
+Heating and cooling load prediction for building designs, with an uncertainty estimate for each prediction.
 
 [![tests](https://github.com/jacobemanuel/building-energy-gpr/actions/workflows/tests.yml/badge.svg)](https://github.com/jacobemanuel/building-energy-gpr/actions/workflows/tests.yml)
 
-Can a probabilistic model predict building loads accurately and also tell me when to trust its prediction less?
+The question was whether a probabilistic model can predict building loads accurately and also show when a prediction is less reliable.
 
-I didn't want another notebook that ends with one R² score and a victory lap. So I built a leakage-safe evaluation pipeline for heating and cooling load on the [UCI Energy Efficiency benchmark](https://doi.org/10.24432/C51307). Ridge regression, a 300-tree random forest and exact Gaussian Process Regression all get tested on the same held-out splits. Point accuracy is only half the analysis. I also check the native Gaussian predictive intervals empirically and then compare them with a separate split-conformal coverage check.
+I built a leakage-safe evaluation pipeline for heating and cooling load on the [UCI Energy Efficiency benchmark](https://doi.org/10.24432/C51307). Ridge regression, a 300-tree random forest and exact Gaussian Process Regression all get tested on the same held-out splits. Besides point accuracy I check the native Gaussian predictive intervals empirically and compare them with a separate split-conformal coverage check.
 
 > Course project for *Python for Engineering Data Analysis - From Machine Learning to Visualization*, Technical University of Munich.
 
@@ -33,16 +33,16 @@ All models and targets share the same outer split. That way the point-error comp
 
 *Heating and cooling loads form a strongly structured design grid. Color shows the glazing-area distribution.*
 
-## What had to compete
+## Models
 
 - **RidgeCV** gives me a regularized linear baseline.
 - **Random Forest** is there as a strong nonlinear point-prediction baseline.
 - **One-hot GPR** is the primary probabilistic model and the one I use in the main analysis.
 - **Numeric-encoding GPR** stays in as an ablation. It does improve some point metrics. But it imposes an unjustified ordinal geometry on nominal categories, so I don't treat it as the primary model.
 
-The Gaussian process uses a constant times a Matern-3/2 kernel, plus a `WhiteKernel` residual component. On deterministic simulation data that component should be read as model lack of fit or numerical tolerance. Don't take it as an empirical decomposition of real-world aleatoric uncertainty.
+The Gaussian process uses a constant times a Matern-3/2 kernel, plus a `WhiteKernel` residual component. On deterministic simulation data that component should be read as model lack of fit or numerical tolerance. It isn't an empirical decomposition of real-world aleatoric uncertainty.
 
-## One model did not win everything
+## Results on the fixed split
 
 Fixed 80/20 holdout with seed 42:
 
@@ -53,13 +53,13 @@ Fixed 80/20 holdout with seed 42:
 | Cooling load (`Y2`) | Random Forest | 1.270 | 2.035 | 0.9553 | n/a | n/a |
 | Cooling load (`Y2`) | GPR | **1.038** | **1.497** | **0.9758** | 91.6% | 92.9% |
 
-Random Forest won on heating-load point accuracy. GPR did better on cooling load and brought model-based uncertainty along with it. That's more useful than forcing one model into the role of universal champion. So I kept the trade-off visible.
+Random Forest was more accurate on heating load. GPR was more accurate on cooling load and also gives a model-based uncertainty estimate, so the report keeps both.
 
 ![Gaussian-process predictions against held-out values](outputs/figures/gpr_pred_vs_true.png)
 
 *Held-out predictions from the primary one-hot GPR. The orange line is just the identity reference and wasn't fitted to the data.*
 
-## One split was not enough
+## Repeated splits
 
 I checked the primary result across 10 repeated random 80/20 holdouts. The numbers below are mean plus or minus standard deviation for the one-hot GPR.
 
@@ -70,7 +70,7 @@ I checked the primary result across 10 repeated random 80/20 holdouts. The numbe
 
 These are repeated holdouts, not k-fold cross-validation. I mention it because the evaluation design decides what the variation means.
 
-## Uncertainty has to earn trust
+## Checking the uncertainty
 
 I evaluated the predictive standard deviations from GPR using empirical coverage, reliability curves and standardized residuals. For heating load the native intervals were conservative. For cooling load the 90% coverage was close to nominal. The 95% coverage came in at 92.9%, so there's mild undercoverage at that level.
 
@@ -87,7 +87,7 @@ I also ran a separate split-conformal sensitivity check. It used an absolute-res
 | Heating load | 94.8% empirical coverage | 97.4% empirical coverage |
 | Cooling load | 89.6% empirical coverage | 95.5% empirical coverage |
 
-These are finite-sample marginal coverage checks under the conformal exchangeability assumption. They don't claim conditional calibration or causal validity. And they don't claim readiness for deployment on real buildings either.
+These are finite-sample marginal coverage checks under the conformal exchangeability assumption. They don't claim conditional calibration or causal validity, and they don't mean the model is ready for real buildings.
 
 <details>
 <summary>Additional view: feature and target distributions</summary>
@@ -140,10 +140,6 @@ The public PDFs keep the academic content but leave out private university ident
 This is a clean simulation grid. A real building is a lot messier. Random holdouts mainly test interpolation inside that grid, not generalization to unseen real buildings. The benchmark is useful for comparing pipelines and uncertainty behavior. But it doesn't reproduce sensor noise, occupancy shifts, weather uncertainty or changes in building stock.
 
 Exact GPR is practical here because `n = 768`. Its cubic training cost means it won't scale to very large datasets as is. The model comparison is compact and reproducible on purpose. I didn't try to turn it into a state-of-the-art hyperparameter competition.
-
-## What I took from the project
-
-The domain is different from my current XR work, but the habit carried over directly: define a measurable question, prevent leakage, compare honest baselines and inspect the uncertainty. Then leave enough evidence for someone else to reproduce the result. It's the same instinct either way. I'm looking for the point where a good-looking result stops being trustworthy.
 
 ## Data attribution
 
