@@ -8,6 +8,8 @@ The question was whether a probabilistic model can predict building loads accura
 
 I built a leakage-safe evaluation pipeline for heating and cooling load on the [UCI Energy Efficiency benchmark](https://doi.org/10.24432/C51307). Ridge regression, a 300-tree random forest and exact Gaussian Process Regression all get tested on the same held-out splits. Besides point accuracy I check the native Gaussian predictive intervals empirically and compare them with a separate split-conformal coverage check.
 
+**In short:** on held-out designs the random forest explained 99.7% of the variance in heating load and the Gaussian process 97.6% in cooling load. The Gaussian process also gives a range with each prediction, and its 90% ranges held 91.6% of the true cooling loads. The models themselves are standard scikit-learn ones. My work is the evaluation around them.
+
 > Course project for *Python for Engineering Data Analysis - From Machine Learning to Visualization*, Technical University of Munich.
 
 ## At a glance
@@ -23,7 +25,7 @@ I built a leakage-safe evaluation pipeline for heating and cooling load on the [
 
 ## The setup
 
-The dataset is a structured Ecotect simulation grid rather than an observational sample of real buildings. The inputs cover relative compactness, surface and wall area, roof area, overall height, orientation, glazing area and glazing-area distribution.
+The dataset is a structured Ecotect simulation grid. It doesn't come from measurements of real buildings. The inputs cover relative compactness, surface and wall area, roof area, overall height, orientation, glazing area and glazing-area distribution.
 
 Orientation and glazing distribution are nominal variables. That's why the main pipeline one-hot encodes them instead of treating their numeric labels as if the distances between them meant something. Continuous variables get standardized. Every preprocessing step lives inside a scikit-learn `Pipeline` and only gets fitted on the training partition.
 
@@ -68,7 +70,7 @@ I checked the primary result across 10 repeated random 80/20 holdouts. The numbe
 | Heating load (`Y1`) | 0.536 +/- 0.044 | 0.719 +/- 0.063 | 0.995 +/- 0.001 |
 | Cooling load (`Y2`) | 1.084 +/- 0.114 | 1.502 +/- 0.233 | 0.974 +/- 0.008 |
 
-These are repeated holdouts, not k-fold cross-validation. I mention it because the evaluation design decides what the variation means.
+These are repeated random holdouts, and that design decides what the spread in the table means.
 
 ## Checking the uncertainty
 
@@ -137,7 +139,7 @@ The public PDFs keep the academic content but leave out private university ident
 
 ## Scope and limitations
 
-This is a clean simulation grid. A real building is a lot messier. Random holdouts mainly test interpolation inside that grid, not generalization to unseen real buildings. The benchmark is useful for comparing pipelines and uncertainty behavior. But it doesn't reproduce sensor noise, occupancy shifts, weather uncertainty or changes in building stock.
+This is a clean simulation grid. A real building is a lot messier. Random holdouts mainly test interpolation inside that grid. They say little about unseen real buildings. The benchmark is useful for comparing pipelines and uncertainty behavior. But it doesn't reproduce sensor noise, occupancy shifts, weather uncertainty or changes in building stock.
 
 Exact GPR is practical here because `n = 768`. Its cubic training cost means it won't scale to very large datasets as is. The model comparison is compact and reproducible on purpose. I didn't try to turn it into a state-of-the-art hyperparameter competition.
 
