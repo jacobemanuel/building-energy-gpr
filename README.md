@@ -137,6 +137,8 @@ report/              public technical report and supplementary appendix
 
 The public PDFs keep the academic content but leave out private university identifiers. This README links every headline result to a reproducible output.
 
+One correction to the report as submitted. Its abstract says coverage is "strong for Y1 and mildly underconfident for Y2". That's the wrong way round. The heating (Y1) intervals are too cautious, and the cooling (Y2) 95% intervals are slightly too narrow, at 92.9%. The body of the report and this README say it correctly. I left the PDF as it was submitted.
+
 ## Scope and limitations
 
 This is a clean simulation grid. A real building is a lot messier. Random holdouts mainly test interpolation inside that grid. They say little about unseen real buildings. The benchmark is useful for comparing pipelines and uncertainty behavior. But it doesn't reproduce sensor noise, occupancy shifts, weather uncertainty or changes in building stock.
@@ -146,3 +148,7 @@ Exact GPR is practical here because `n = 768`. Its cubic training cost means it 
 ## Data attribution
 
 Tsanas, A. and Xifara, A. (2012). *Energy Efficiency* [Dataset]. UCI Machine Learning Repository. [DOI: 10.24432/C51307](https://doi.org/10.24432/C51307). Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+## Licence
+
+The code is under the [MIT licence](LICENSE). The dataset keeps its own CC BY 4.0 licence, see above.
