@@ -1,6 +1,8 @@
-# Probabilistic Building Energy Prediction
+# Probabilistic building energy prediction
 
-Heating and cooling load prediction for building designs, with an uncertainty estimate for each prediction.
+Heating and cooling load prediction for building designs, with a checked uncertainty range for each prediction.
+
+[See this project on majewski.studio](https://majewski.studio/#p6)
 
 [![tests](https://github.com/jacobemanuel/building-energy-gpr/actions/workflows/tests.yml/badge.svg)](https://github.com/jacobemanuel/building-energy-gpr/actions/workflows/tests.yml)
 
@@ -8,7 +10,7 @@ The question was whether a probabilistic model can predict building loads accura
 
 I built a leakage-safe evaluation pipeline for heating and cooling load on the [UCI Energy Efficiency benchmark](https://doi.org/10.24432/C51307). Ridge regression, a 300-tree random forest and exact Gaussian Process Regression all get tested on the same held-out splits. Besides point accuracy I check the native Gaussian predictive intervals empirically and compare them with a separate split-conformal coverage check.
 
-**In short:** on held-out designs the random forest explained 99.7% of the variance in heating load and the Gaussian process 97.6% in cooling load. The Gaussian process also gives a range with each prediction, and its 90% ranges held 91.6% of the true cooling loads, close to target. For heating they were too cautious and held 96.1%. The models themselves are standard scikit-learn ones. My work is the evaluation around them.
+**In short.** On held-out designs the random forest explained 99.7% of the variance in heating load and the Gaussian process 97.6% in cooling load. The Gaussian process also gives a range with each prediction, and its 90% ranges held 91.6% of the true cooling loads, close to target. For heating they were too cautious and held 96.1%. The models themselves are standard scikit-learn ones. My work is the evaluation around them.
 
 > Course project for *Python for Engineering Data Analysis - From Machine Learning to Visualization*, Technical University of Munich.
 
@@ -92,7 +94,7 @@ I also ran a separate split-conformal sensitivity check. It used an absolute-res
 These are finite-sample marginal coverage checks under the conformal exchangeability assumption. They don't claim conditional calibration or causal validity, and they don't mean the model is ready for real buildings.
 
 <details>
-<summary>Additional view: feature and target distributions</summary>
+<summary>Feature and target distributions</summary>
 
 ![Feature and target distributions](outputs/figures/feature_target_histograms.png)
 
